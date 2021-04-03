@@ -1,5 +1,5 @@
 import { Vector } from './lib/lib.js'
-import { SCALE, CANVAS, FOODF, HOMEF, GROUND, ANT_SPEED, ANT_FERMONE_STRENGTH_DECAY, ANT_BONUS_STRENGTH_FERMONE, ANT_FERMONE_STRENGTH } from './Consts.js'
+import { SCALE, WIDTH, HEIHGT, FOODF, HOMEF, GROUND, ANT_SPEED, ANT_FERMONE_STRENGTH_DECAY, ANT_BONUS_STRENGTH_FERMONE, ANT_FERMONE_STRENGTH } from './Consts.js'
 
 export default class Ant {
   constructor(x, y) {
@@ -23,11 +23,11 @@ export default class Ant {
     const x = this.pos.x - (this.width / 2)
     const y = this.pos.y - (this.height / 2)
 
-    if (this.find == 'food') CANVAS.setColor('#F00')
-    if (this.find == 'home') CANVAS.setColor('#00F')
-    CANVAS.rotateCenter(x, y, this.width, this.height, this.angle)
-    CANVAS.drawRectangle(x, y, this.width, this.height)
-    CANVAS.resetTransform()
+    // if (this.find == 'food') CANVAS.setColor('#F00')
+    // if (this.find == 'home') CANVAS.setColor('#00F')
+    // CANVAS.rotateCenter(x, y, this.width, this.height, this.angle)
+    // CANVAS.drawRectangle(x, y, this.width, this.height)
+    // CANVAS.resetTransform()
   }
 
   do() {
@@ -65,9 +65,9 @@ export default class Ant {
   }
 
   checkCollision() {
-    if (this.pos.x + this.width > CANVAS.width
+    if (this.pos.x + this.width > WIDTH
       || this.pos.x < 0
-      || this.pos.y + this.height > CANVAS.height
+      || this.pos.y + this.height > HEIHGT
       || this.pos.y - this.height < 0) {this.pos.x = 250; this.pos.y = 250} //this.angle += Math.PI
   }
 
