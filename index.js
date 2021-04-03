@@ -5,38 +5,48 @@ import Ant from './Ant.js'
 const ants = []
 let renderPaths = true
 
+let mouseIsDown = false
+
 for(let i = 0; i < POPULATION; i++) {
   ants.push(new Ant(CANVAS.width / 2, CANVAS.height / 2) )
 }
 
 function setUp() {
   CANVAS.loop(draw)
+  CANVAS.canvasElement.onmousedown = () => mouseIsDown = true
+  CANVAS.canvasElement.onmouseup = () => mouseIsDown = false
 
-  CANVAS.canvasElement.onclick = () => {
-    renderPaths = !renderPaths
+  CANVAS.canvasElement.onmousemove  = e => {
+    if (!mouseIsDown) return
+    const mx = Math.ceil(e.offsetX / SCALE)
+    const my = Math.ceil(e.offsetY / SCALE)
+    const r = 3
+
+    for(let y = my - r; y < my + r; y++) {
+      for(let x = mx - r; x < mx + r; x++) {
+        if (GROUND[y] === undefined) continue
+        if (GROUND[y][x] === undefined || GROUND[y][x] === 1) continue
+        GROUND[y][x] = 2
+      }
+    }
   }
+
+  document.body.onkeyup = e => {
+    if(e.key == ' '){
+      renderPaths = !renderPaths
+    }
+}
 }
 
 function draw() {
   CANVAS.setColor('#000')
   CANVAS.drawBackground()
 
-  
-  // for (let i = 0; i < 10; i++) {
   updateFermones()
-  // drawGrid()
-  
-
   for(const ant of ants) {
     ant.draw()
     ant.do()
-  // }
   }
-
-
-
-  // CANVAS.setColor('#0F0')
-  // CANVAS.drawCircle(CANVAS.width / 2, CANVAS.height / 2, SCALE) 
 }
 
 function updateFermones() {
@@ -55,15 +65,15 @@ function updateFermones() {
       }
 
       if (FOODF[y][x] > 0 && renderPaths) {
+        // CANVAS.setColor(`hsl(${360 * (FOODF[y][x] / (ANT_FERMONE_STRENGTH))}, 100%, 50%, ${FOODF[y][x] / (ANT_FERMONE_STRENGTH)})`)
         CANVAS.setColor(`rgba(255, 0, 255, ${FOODF[y][x] / ANT_FERMONE_STRENGTH})`)
         CANVAS.drawRectangle(x * SCALE, y * SCALE, SCALE, SCALE)
-        // continue
       }
 
       if (HOMEF[y][x] > 0 && renderPaths) {
+        // CANVAS.setColor(`hsla(${360 * (HOMEF[y][x] / (ANT_FERMONE_STRENGTH))}, 100%, 50%, ${HOMEF[y][x] / (ANT_FERMONE_STRENGTH)})`)
         CANVAS.setColor(`rgba(255, 255, 0, ${HOMEF[y][x] / ANT_FERMONE_STRENGTH})`)
         CANVAS.drawRectangle(x * SCALE, y * SCALE, SCALE, SCALE)
-        // continue
       }
 
       FOODF[y][x] = FOODF[y][x] > 0 ? FOODF[y][x] - GROUND_FERMONE_DECAY : 0

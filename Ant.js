@@ -33,13 +33,13 @@ export default class Ant {
   do() {
     this.move()
     this.dropFermone()
-    this.checkCollision()
   }
 
   move() {
     this.findAngle()
     this.velocity.setAngle(this.angle)
     this.pos.add(this.velocity)
+    this.checkCollision()
 
     const fpx = Math.floor(this.pos.x / SCALE)
     const fpy = Math.floor(this.pos.y / SCALE)
@@ -61,7 +61,7 @@ export default class Ant {
 
     this.fermoneIntensity -= ANT_FERMONE_STRENGTH_DECAY
     if (this.fermoneIntensity < 0) this.fermoneIntensity = 0
-    if (this.fermoneIntensity > 2 * ANT_FERMONE_STRENGTH) this.fermoneIntensity = 2 * ANT_FERMONE_STRENGTH 
+    // if (this.fermoneIntensity > 2 * ANT_FERMONE_STRENGTH) this.fermoneIntensity = 2 * ANT_FERMONE_STRENGTH 
   }
 
   checkCollision() {
