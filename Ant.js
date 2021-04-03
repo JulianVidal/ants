@@ -1,5 +1,5 @@
 import { Vector } from './lib/lib.js'
-import { SCALE, CANVAS, FERMONES } from './Consts.js'
+import { SCALE, CANVAS, FOODF, HOMEF, GROUND, ANT_SPEED, ANT_FERMONE_STRENGTH_DECAY, ANT_BONUS_STRENGTH_FERMONE, ANT_FERMONE_STRENGTH } from './Consts.js'
 
 export default class Ant {
   constructor(x, y) {
@@ -9,18 +9,22 @@ export default class Ant {
     this.width = 2 * SCALE
     this.height = SCALE
 
-    this.speed = 5
-    this.velocity = new Vector(this.speed, 0)
+    this.velocity = new Vector(ANT_SPEED, 0)
     this.velocity.setAngle(this.angle)
 
     this.find = 'food'
+    this.fermoneD = HOMEF
+    this.fermoneF = FOODF
+
+    this.fermoneIntensity = ANT_FERMONE_STRENGTH
   }
 
   draw() {
     const x = this.pos.x - (this.width / 2)
     const y = this.pos.y - (this.height / 2)
 
-    CANVAS.setColor('#FFF')
+    if (this.find == 'food') CANVAS.setColor('#F00')
+    if (this.find == 'home') CANVAS.setColor('#00F')
     CANVAS.rotateCenter(x, y, this.width, this.height, this.angle)
     CANVAS.drawRectangle(x, y, this.width, this.height)
     CANVAS.resetTransform()
@@ -39,15 +43,25 @@ export default class Ant {
 
     const fpx = Math.floor(this.pos.x / SCALE)
     const fpy = Math.floor(this.pos.y / SCALE)
-    if (FERMONES[fpy][fpx] === 3) {
+    if (GROUND[fpy][fpx] === 2 && this.find === 'food') {
       this.find = 'home'
-      FERMONES[fpy][fpx] = 0
+      GROUND[fpy][fpx] = 0
+      this.fermoneD = FOODF
+      this.fermoneF = HOMEF
+      this.fermoneIntensity += ANT_BONUS_STRENGTH_FERMONE
       this.angle += Math.PI
     }
-    if (FERMONES[fpy][fpx] === 4) {
+    if (GROUND[fpy][fpx] === 1 && this.find === 'home') {
       this.find = 'food'
-      // this.angle += Math.PI
+      this.fermoneD = HOMEF
+      this.fermoneF = FOODF
+      this.fermoneIntensity += ANT_BONUS_STRENGTH_FERMONE
+      this.angle += Math.PI
     }
+
+    this.fermoneIntensity -= ANT_FERMONE_STRENGTH_DECAY
+    if (this.fermoneIntensity < 0) this.fermoneIntensity = 0
+    if (this.fermoneIntensity > 2 * ANT_FERMONE_STRENGTH) this.fermoneIntensity = 2 * ANT_FERMONE_STRENGTH 
   }
 
   checkCollision() {
@@ -61,9 +75,8 @@ export default class Ant {
     const x = Math.floor(this.pos.x / SCALE)
     const y = Math.floor(this.pos.y / SCALE)
 
-    if (FERMONES[y][x] === 3 || FERMONES[y][x] === 4) return
-    if (this.find === 'food') FERMONES[y][x] = 1
-    if (this.find === 'home') FERMONES[y][x] = 2
+    if (GROUND[y][x] !== 0) return
+    this.fermoneD[y][x] = this.fermoneD[y][x] > this.fermoneIntensity ? this.fermoneD[y][x] : this.fermoneIntensity
   }
   
   findAngle() {
@@ -73,7 +86,7 @@ export default class Ant {
     const vel = new Vector(1, 0)
     const sensors = []
 
-    for (let v = 0; v < 6; v += 1) {
+    for (let v = 0; v < 7; v += 1) {
       for (let a = -Math.PI / 4; a < Math.PI / 4; a += 0.02) {
         vel.setMagnitude(this.width + v * SCALE)
         vel.setAngle(this.angle + a)
@@ -81,16 +94,33 @@ export default class Ant {
         const fx = Math.ceil((x + vel.x) / SCALE)
         const fy = Math.ceil((y + vel.y) / SCALE)
 
-        if (FERMONES[fy] === undefined ) {
-          sensors.push({angle: a, intensity: null})
+        if (GROUND[fy] === undefined ) {
+          sensors.push({angle: -a, intensity: null})
           continue
         }
-        if (FERMONES[fy][fx] === undefined) {
+        if (GROUND[fy][fx] === undefined) {
+          sensors.push({angle: -a, intensity: null})
+          continue
+        }
+
+        if (this.find === 'home' ) {
+          if (GROUND[fy][fx] === 1){ 
+            sensors.push({angle: a, intensity: null,});    
+            continue
+          }
+          if (GROUND[fy][fx] === 2) {
+            sensors.push({angle: -a, intensity: null})
+            continue
+          }
+
+        }
+
+        if (this.find === 'food' && GROUND[fy][fx] === 2) {
           sensors.push({angle: a, intensity: null})
           continue
         }
 
-        sensors.push({angle: a, intensity: FERMONES[fy][fx]})
+        sensors.push({angle: a, intensity: this.fermoneF[fy][fx]})
 
         // CANVAS.setColor('#F00'); CANVAS.drawRectangle(fx * SCALE, fy * SCALE, SCALE, SCALE)
       }
@@ -99,25 +129,13 @@ export default class Ant {
     const randomAngle = (Math.random() * (Math.PI / 6) - Math.PI / 12)
     let dAngle = 0
 
-    for(const {intensity, angle} of sensors) {
+    for(const {intensity, angle, avoid} of sensors) {
       if (intensity === null) {
-        dAngle = -angle * sensors.length
+        dAngle = angle * sensors.length
         break
       }
 
-      if (this.find === 'food' && ((intensity > 0 && intensity <= 1) || intensity === 3)) {
-        dAngle += angle * intensity
-        continue
-      }
-
-      if (this.find === 'home' && ((intensity > 1 && intensity <= 2) || intensity >= 3)) {
-        if (intensity === 3) {
-          dAngle = -angle * sensors.length
-          break
-        }
-        dAngle += angle * intensity
-        continue
-      }
+      dAngle += angle * intensity
     }
 
     this.angle += randomAngle + (dAngle / sensors.length)

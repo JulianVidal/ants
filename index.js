@@ -1,8 +1,9 @@
-import { SCALE, CANVAS, FERMONES, POPULATION, FOODF, HOMEF, Food } from './Consts.js'
+import { SCALE, CANVAS, POPULATION, FOODF, HOMEF, GROUND, GROUND_FERMONE_DECAY, ANT_FERMONE_STRENGTH } from './Consts.js'
 import Ant from './Ant.js'
 
 // const ant = new Ant(CANVAS.width / 2, CANVAS.height / 2) 
 const ants = []
+let renderPaths = true
 
 for(let i = 0; i < POPULATION; i++) {
   ants.push(new Ant(CANVAS.width / 2, CANVAS.height / 2) )
@@ -10,6 +11,10 @@ for(let i = 0; i < POPULATION; i++) {
 
 function setUp() {
   CANVAS.loop(draw)
+
+  CANVAS.canvasElement.onclick = () => {
+    renderPaths = !renderPaths
+  }
 }
 
 function draw() {
@@ -37,38 +42,33 @@ function draw() {
 function updateFermones() {
   for(let y = 0; y < CANVAS.height / SCALE; y++) {
     for(let x = 0; x < CANVAS.width / SCALE; x++) {
-
+      if (GROUND[y][x] === 1) {
+        CANVAS.setColor(`rgb(255, 255, 255`)
+        CANVAS.drawRectangle(x * SCALE, y * SCALE, SCALE, SCALE)
+        continue
+      }
       
+      if (GROUND[y][x] === 2) {
+        CANVAS.setColor(`rgb(0, 255, 0)`)
+        CANVAS.drawRectangle(x * SCALE, y * SCALE, SCALE, SCALE)
+        continue
+      }
 
-    //   if (FERMONES[y][x] > 0 && FERMONES[y][x] <= 1) {
-    //     CANVAS.setColor(`rgba(255, 255, 0, ${FERMONES[y][x]})`)
-    //     CANVAS.drawRectangle(x * SCALE, y * SCALE, SCALE, SCALE)
-    //   }
+      if (FOODF[y][x] > 0 && renderPaths) {
+        CANVAS.setColor(`rgba(255, 0, 255, ${FOODF[y][x] / ANT_FERMONE_STRENGTH})`)
+        CANVAS.drawRectangle(x * SCALE, y * SCALE, SCALE, SCALE)
+        // continue
+      }
 
-    //   if (FERMONES[y][x] > 1 && FERMONES[y][x] <= 2) {
-    //     CANVAS.setColor(`rgba(255, 0, 255, ${FERMONES[y][x] - 1})`)
-    //     CANVAS.drawRectangle(x * SCALE, y * SCALE, SCALE, SCALE)
-    //   }
-      
-    //   if (FERMONES[y][x] === 3) {
-    //     CANVAS.setColor(`rgba(0, 255, 0, ${FERMONES[y][x]})`)
-    //     CANVAS.drawRectangle(x * SCALE, y * SCALE, SCALE, SCALE)
-    //   }
+      if (HOMEF[y][x] > 0 && renderPaths) {
+        CANVAS.setColor(`rgba(255, 255, 0, ${HOMEF[y][x] / ANT_FERMONE_STRENGTH})`)
+        CANVAS.drawRectangle(x * SCALE, y * SCALE, SCALE, SCALE)
+        // continue
+      }
 
-    //   if (FERMONES[y][x] === 4) {
-    //     CANVAS.setColor(`rgba(255, 255, 255, ${FERMONES[y][x]})`)
-    //     CANVAS.drawRectangle(x * SCALE, y * SCALE, SCALE, SCALE)
-    //   }
-
-    //   if (FERMONES[y][x] === 3 || FERMONES[y][x] === 4) continue
-    //   if (FERMONES[y][x] > 1) {
-    //     FERMONES[y][x] -= 0.001
-    //     FERMONES[y][x] = FERMONES[y][x] <= 1 ? 0 : FERMONES[y][x]
-    //     continue
-    //   }
-
-    //   FERMONES[y][x] = FERMONES[y][x] > 0 ? FERMONES[y][x] - 0.003 : 0
-    // }
+      FOODF[y][x] = FOODF[y][x] > 0 ? FOODF[y][x] - GROUND_FERMONE_DECAY : 0
+      HOMEF[y][x] = HOMEF[y][x] > 0 ? HOMEF[y][x] - GROUND_FERMONE_DECAY : 0
+    }
   }
 }
 
