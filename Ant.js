@@ -16,16 +16,17 @@ export default class Ant {
     this.fermoneD = HOMEF
     this.fermoneF = FOODF
 
-    this.fermoneIntensity = ANT_FERMONE_STRENGTH
+    this.fermoneIntensity = ANT_FERMONE_STRENGTH * Math.random()
   }
 
   draw() {
-    const x = Math.floor(this.pos.x)
-    const y = Math.floor(this.pos.y)
+    const x = Math.trunc(this.pos.x)
+    const y = Math.trunc(this.pos.y)
   }
 
   do() {
-    GROUND[Math.floor(this.pos.y)][Math.floor(this.pos.x)] = GROUND[Math.floor(this.pos.y)][Math.floor(this.pos.x)] === 3 ? 0 : GROUND[Math.floor(this.pos.y)][Math.floor(this.pos.x)]
+    const ground = GROUND[Math.trunc(this.pos.y)][Math.trunc(this.pos.x)]
+    GROUND[Math.trunc(this.pos.y)][Math.trunc(this.pos.x)] = ground === 3 ? 0 : ground
     this.dropFermone()
     this.move()
   }
@@ -36,24 +37,27 @@ export default class Ant {
     this.pos.add(this.velocity)
     this.checkCollision()
 
-    const fpx = Math.floor(this.pos.x)
-    const fpy = Math.floor(this.pos.y)
+    const fpx = Math.trunc(this.pos.x)
+    const fpy = Math.trunc(this.pos.y)
 
-    GROUND[fpy][fpx] = GROUND[fpy][fpx] === 0 ? 3 : GROUND[fpy][fpx]
-    if (GROUND[fpy][fpx] === 2 && this.find === 'food') {
+    const ground = GROUND[fpy][fpx]
+    GROUND[fpy][fpx] = ground === 0 ? 3 : ground
+    if (ground === 2 && this.find === 'food') {
       this.find = 'home'
       GROUND[fpy][fpx] = 0
       this.fermoneD = FOODF
       this.fermoneF = HOMEF
       this.fermoneIntensity += ANT_BONUS_STRENGTH_FERMONE
       this.angle += Math.PI
+      this.findAngle()
     }
-    if (GROUND[fpy][fpx] === 1 && this.find === 'home') {
+    if (ground === 1 && this.find === 'home') {
       this.find = 'food'
       this.fermoneD = HOMEF
       this.fermoneF = FOODF
       this.fermoneIntensity += ANT_BONUS_STRENGTH_FERMONE
       this.angle += Math.PI
+      this.findAngle()
     }
 
     this.fermoneIntensity -= ANT_FERMONE_STRENGTH_DECAY
@@ -69,12 +73,13 @@ export default class Ant {
         this.angle += Math.PI //{this.pos.x = 250; this.pos.y = 250} 
         this.velocity.setAngle(this.angle)
         this.pos.add(this.velocity)
+        this.checkCollision()
       }
   }
 
   dropFermone() {
-    const x = Math.floor(this.pos.x)
-    const y = Math.floor(this.pos.y)
+    const x = Math.trunc(this.pos.x)
+    const y = Math.trunc(this.pos.y)
 
     if (GROUND[y][x] !== 0) return
     this.fermoneD[y][x] = this.fermoneD[y][x] > this.fermoneIntensity ? this.fermoneD[y][x] : this.fermoneIntensity
@@ -88,55 +93,75 @@ export default class Ant {
     const sensors = []
 
     for (let v = 1; v < 7; v += 1) {
-      for (let a = -Math.PI / 4; a < Math.PI / 4; a += 0.02) {
+      for (let a = -Math.PI / 2; a < Math.PI / 2; a += Math.PI / 1,570) {
         vel.setMagnitude(v)
         vel.setAngle(this.angle + a)
 
-        const fx = Math.floor(x + vel.x)
-        const fy = Math.floor(y + vel.y)
+        const fx = Math.trunc(x + vel.x)
+        const fy = Math.trunc(y + vel.y)
 
-        if (GROUND[fy] === undefined ) {
-          sensors.push({angle: -a, intensity: null})
-          continue
+        // let r = false
+        // for (let i = 0; i < sensors.length; i++) {
+        //   const s = sensors[i]
+        //   if (s.fx === fx && s.fy === fy) {
+        //     r = true
+        //     break
+        //   }
+        // }
+
+        // if (r) continue
+
+        if (fy >= HEIGHT || fy < 0) {
+          sensors.push({angle: -a, fx, fy, intensity: null})
+          break
         }
-        if (GROUND[fy][fx] === undefined) {
-          sensors.push({angle: -a, intensity: null})
-          continue
-        }
-
-        if (this.find === 'home' ) {
-          if (GROUND[fy][fx] === 1){ 
-            sensors.push({angle: a, intensity: ANT_FERMONE_STRENGTH * 2,});    
-            // continue
-          }
-          if (GROUND[fy][fx] === 2) {
-            sensors.push({angle: -a, intensity: null})
-            continue
-          }
-
-        }
-
-        if (this.find === 'food' && GROUND[fy][fx] === 2) {
-          sensors.push({angle: a, intensity: ANT_FERMONE_STRENGTH * 2})
-          // continue
+        if (fx >= WIDTH || fx < 0) {
+          sensors.push({angle: -a, fx, fy, intensity: null})
+          break
         }
 
-        sensors.push({angle: a, intensity: this.fermoneF[fy][fx]})
+        // const ground = GROUND[fy][fx]
+
+        // if (this.find === 'home' ) {
+        //   if (ground === 1 && a === Math.PI / 2){ 
+        //     sensors.push({angle: a, fx, fy, intensity: null});    
+        //     break
+        //   }
+        //   // if (ground === 2) {
+        //   //   sensors.push({angle: -a, fx, fy, intensity: 1})
+        //   //   continue
+        //   // }
+
+        // }
+
+        // if (this.find === 'food' && ground === 2 && a === Math.PI / 2) {
+        //   sensors.push({angle: a, fx, fy, intensity: null})
+        //   break
+        // }
+
+        const fermone = this.fermoneF[fy][fx]
+        // if (fermone === 0) {
+        //   continue
+        // }
+
+        sensors.push({angle: a, fx, fy, intensity: fermone})
       }
     }
-    
-    const randomAngle = (Math.random() * (Math.PI / 6) - Math.PI / 12)
+    const sensorLength = sensors.length
+    const randomAngle = (Math.random() * (Math.PI / 12) - Math.PI / 24) //0
     let dAngle = 0
-
+    let follow = false
     for(const {intensity, angle} of sensors) {
       if (intensity === null) {
-        dAngle = angle * sensors.length
+        this.angle += angle
+        follow = true
         break
       }
 
       dAngle += angle * intensity
     }
 
-    this.angle += randomAngle + (dAngle / sensors.length)
+    if (follow) return
+    this.angle += randomAngle + ((dAngle / ((sensorLength) ** 2)) | 0)
   }
 }

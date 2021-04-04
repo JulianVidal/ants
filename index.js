@@ -78,10 +78,12 @@ function updateFermones() {
 }
 
 function createTextureArray() {
-  const textureArr = new Uint8ClampedArray(GROUND.length * GROUND[0].length * 4);
+  const textureArr = new Uint8ClampedArray(HEIGHT * WIDTH * 4);
 
-  for(var i = 0; i < GROUND.length; i++){
-    for(var j = 0; j < GROUND[i].length; j++){
+  for(var i = 0; i < HEIGHT; i++){
+    let constant1 = i * WIDTH
+
+    for(var j = 0; j < WIDTH; j++){
       let r = 0, g = 0, b = 0, a = 0
       if (GROUND[i][j] === 2) {
         r = 0
@@ -113,9 +115,11 @@ function createTextureArray() {
         }
       }
 
+      let constant2 = 4 * (constant1 + j)
+
       for (var k = 0; k < 4; k++) {
         const c = k === 0 ? r : (k === 1 ? g : (k === 2 ? b : a))
-        textureArr[4 * (i * GROUND[i].length + j) + k] = c
+        textureArr[constant2 + k] = c
       }
     }
   }
