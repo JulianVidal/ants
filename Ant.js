@@ -1,5 +1,5 @@
 import { Vector } from './lib/lib.js'
-import { SCALE, WIDTH, HEIHGT, FOODF, HOMEF, GROUND, ANT_SPEED, ANT_FERMONE_STRENGTH_DECAY, ANT_BONUS_STRENGTH_FERMONE, ANT_FERMONE_STRENGTH } from './Consts.js'
+import { SCALE, WIDTH, HEIGHT, FOODF, HOMEF, GROUND, ANT_SPEED, ANT_FERMONE_STRENGTH_DECAY, ANT_BONUS_STRENGTH_FERMONE, ANT_FERMONE_STRENGTH } from './Consts.js'
 
 export default class Ant {
   constructor(x, y) {
@@ -67,7 +67,7 @@ export default class Ant {
   checkCollision() {
     if (this.pos.x + this.width > WIDTH
       || this.pos.x < 0
-      || this.pos.y + this.height > HEIHGT
+      || this.pos.y + this.height > HEIGHT
       || this.pos.y - this.height < 0) {this.pos.x = 250; this.pos.y = 250} //this.angle += Math.PI
   }
 

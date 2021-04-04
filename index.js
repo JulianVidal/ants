@@ -1,8 +1,8 @@
-import { SCALE, WIDTH, HEIHGT, POPULATION, FOODF, HOMEF, GROUND, GROUND_FERMONE_DECAY, ANT_FERMONE_STRENGTH } from './Consts.js'
+import { SCALE, WIDTH, HEIGHT, POPULATION, FOODF, HOMEF, GROUND, GROUND_FERMONE_DECAY, ANT_FERMONE_STRENGTH } from './Consts.js'
 import Ant from './Ant.js'
 
 // const ant = new Ant(CANVAS.width / 2, CANVAS.height / 2) 
-const app = new PIXI.Application({width: WIDTH, height: HEIHGT});
+const app = new PIXI.Application({width: WIDTH, height: HEIGHT});
 document.body.appendChild(app.view);
 
 const resources = PIXI.Loader.shared.resources
@@ -10,10 +10,11 @@ const resources = PIXI.Loader.shared.resources
 let background
 
 PIXI.Loader.shared.add([
-  'fragShader.glsl'
+  'fragShader.glsl',
+  '500x300.png'
 ]).load(setUp)
 
-let uniforms = { ground: [] }
+// let uniforms = { ground: [] }
 
 const ants = []
 let renderPaths = true
@@ -21,22 +22,42 @@ let renderPaths = true
 let mouseIsDown = false
 
 for(let i = 0; i < POPULATION; i++) {
-  ants.push(new Ant(WIDTH / 2, HEIHGT / 2) )
+  ants.push(new Ant(WIDTH / 2, HEIGHT / 2) )
 }
 
 function setUp() {
-  background = new PIXI.Sprite()
-  background.width = WIDTH
-  background.height = HEIHGT
-
-  const fShader = resources['fragShader.glsl'].data
-  const filter = new PIXI.Filter(undefined, fShader, uniforms)
-  uniforms.ground = []
-  for (let i = 0; i< 30; i++) {
-    uniforms.ground.push(Math.random())
+  
+  let textureArr = new Uint8ClampedArray(GROUND.length * GROUND[0].length * 4);
+  // for(var i = 0; i < GROUND.length; i++){
+  //   textureArr = [...textureArr, ...GROUND[i]];
+  // }
+  
+  for(var i = 0; i < GROUND.length; i++){
+    for(var j = 0; j < GROUND[i].length; j++){
+      for (var k = 0; k < 4; k++) {
+        textureArr[4 * (i * GROUND[i].length + j) + k] = GROUND[i][j]
+      }
+    }
   }
+  console.log(textureArr)
+
+  const baseTexture = new PIXI.BaseTexture(new PIXI.resources.BufferResource(textureArr, {width: WIDTH, height:HEIGHT}));
+  const texture2 = new PIXI.Texture(baseTexture);
+  const texture = PIXI.Texture.from('500x300.png');
+  console.log(texture, texture2)
+
+  background = new PIXI.Sprite(texture2)
+  background.width = WIDTH
+  background.height = HEIGHT
+
+  // const fShader = resources['fragShader.glsl'].data
+  // const filter = new PIXI.Filter(undefined, fShader, uniforms)
+  // uniforms.ground = []
+  // for (let i = 0; i< 30; i++) {
+  //   uniforms.ground.push(Math.random())
+  // }
   app.stage.addChild(background)
-  app.stage.filters = [filter]
+  // app.stage.filters = [filter]
   // CANVAS.loop(draw)
   // CANVAS.canvasElement.onmousedown = () => mouseIsDown = true
   // CANVAS.canvasElement.onmouseup = () => mouseIsDown = false
@@ -60,14 +81,16 @@ function setUp() {
     if(e.key == ' '){
       renderPaths = !renderPaths
     }
-}
-app.ticker.add(delta => draw(delta));
-draw()
+  }
+
+  // console.log(textureArr)
+// app.ticker.add(delta => draw(delta));
+// draw()
 }
 
 function draw(delta) {
-  // app.stage.removeChild(ground)
 
+  // app.stage.removeChild(ground)
   // CANVAS.setColor('#000')
   // CANVAS.drawBackground()
 
@@ -81,7 +104,7 @@ function draw(delta) {
 }
 
 function updateFermones() {
-  for(let y = 0; y < HEIHGT / SCALE; y++) {
+  for(let y = 0; y < HEIGHT / SCALE; y++) {
     for(let x = 0; x < WIDTH / SCALE; x++) {
       if (GROUND[y][x] === 1) {
 

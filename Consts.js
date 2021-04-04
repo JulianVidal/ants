@@ -2,8 +2,8 @@ import { Canvas } from './lib/lib.js'
 
 export const SCALE = 1
 export const WIDTH = SCALE * (Math.floor(500 / SCALE))
-export const HEIHGT = SCALE * (Math.floor(300 / SCALE))
-// export const CANVAS = new Canvas(WIDTH, HEIHGT)
+export const HEIGHT = SCALE * (Math.floor(300 / SCALE))
+// export const CANVAS = new Canvas(WIDTH, HEIGHT)
 export const POPULATION = 200
 
 export const ANT_SPEED = SCALE
@@ -16,7 +16,7 @@ export const FOODF = []
 export const HOMEF = []
 export const GROUND = []
 
-for(let y = 0; y < HEIHGT / SCALE; y++) {
+for(let y = 0; y < HEIGHT / SCALE; y++) {
   if (!FOODF[y]) FOODF[y] = []
   if (!HOMEF[y]) HOMEF[y] = []
   if (!GROUND[y]) GROUND[y] = []
@@ -30,8 +30,8 @@ for(let y = 0; y < HEIHGT / SCALE; y++) {
     if (x > (WIDTH / SCALE - 20) && x < WIDTH / SCALE - 1 && y > (20) && y < 90) GROUND[y][x] = 2
     if (x > Math.floor(WIDTH / SCALE / 2) - 5 
     && x < Math.floor(WIDTH / SCALE / 2)  + 5
-    && y > Math.floor(HEIHGT / SCALE / 2) - 5 
-    && y < Math.floor(HEIHGT / SCALE/ 2)  + 5) GROUND[y][x] = 1
+    && y > Math.floor(HEIGHT / SCALE / 2) - 5 
+    && y < Math.floor(HEIGHT / SCALE/ 2)  + 5) GROUND[y][x] = 1
     
   }
 }
