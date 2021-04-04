@@ -27,8 +27,24 @@ function setUp() {
   canvas.addEventListener("webglcontextlost", function(event) {
       event.preventDefault();
   }, false);
-  // canvas.addEventListener(
-  //   "webglcontextrestored", setupWebGLStateAndResources, false);
+
+  canvas.onmousedown = () => mouseIsDown = true
+  canvas.onmouseup = () => mouseIsDown = false
+
+  canvas.onmousemove  = e => {
+    if (!mouseIsDown) return
+    const mx = Math.ceil(e.offsetX / SCALE)
+    const my = Math.ceil(e.offsetY / SCALE)
+    const r = 8
+
+    for(let y = my - r; y < my + r; y++) {
+      for(let x = mx - r; x < mx + r; x++) {
+        if (GROUND[y] === undefined) continue
+        if (GROUND[y][x] === undefined || GROUND[y][x] === 1) continue
+        GROUND[y][x] = 2
+      }
+    }
+  }
     
   const textureArr = createTextureArray()
   console.log(textureArr)

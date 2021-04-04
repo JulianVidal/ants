@@ -115,7 +115,7 @@ export default class Ant {
             break
           }
           if (ground === 2) {
-            sensors.push({angle: -a, intensity: 1})
+            sensors.push({angle: -a, intensity: ANT_BONUS_STRENGTH_FERMONE})
             continue
           }
 
