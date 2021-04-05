@@ -1,4 +1,4 @@
-import { SCALE, WIDTH, HEIGHT, POPULATION, FOODF, HOMEF, GROUND, GROUND_FERMONE_DECAY, ANT_FERMONE_STRENGTH } from './Consts.js'
+import { _GPU, SCALE, WIDTH, HEIGHT, POPULATION, FOODF, HOMEF, GROUND, GROUND_FERMONE_DECAY, ANT_FERMONE_STRENGTH } from './Consts.js'
 import Ant from './Ant.js'
 
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
@@ -61,7 +61,6 @@ function setUp() {
       renderPaths = !renderPaths
     }
   }
-  // draw()
 
   const sens1 = []
   for (let v = 1; v < 7; v += 1) {
@@ -69,10 +68,30 @@ function setUp() {
       sens1.push([v, a])
     }
   }
-  console.log('sense1:', sens1)
 
-  const sens2 = generateSensors()
-  console.log('sense2:', sens2)
+  // const applyAngle = _GPU.createKernel(function(a) {
+  //   const magnitude = a[this.thread.x][0]
+  //   const angle = a[this.thread.x][1]
+  
+  //   let x = magnitude * Math.cos(angle)
+  //   let y = magnitude * Math.sin(angle)
+  
+  //   return [x, y]
+  // }).setOutput([96])
+
+  const items = 6 * Math.ceil(((Math.PI / 2) / 0.1))
+  const applyAngle = _GPU.createKernel(function(a) {
+    // const magnitude = a[this.thread.x][0]
+    // const angle = a[this.thread.x][1]
+
+    // let x = a[this.thread.x][0] * Math.cos(a[this.thread.x][1])
+    // let y = a[this.thread.x][0] * Math.sin(a[this.thread.x][1])
+
+    return [
+      this.thread.x, 
+      this.thread.x, 
+      this.thread.x]
+  }).setOutput([items])
 
   const sens_1 = () => {
     const vectors = []
@@ -86,41 +105,30 @@ function setUp() {
     return vectors
   }
 
-  console.log('sense_1:', sens_1())
+  let then = new Date;
+  for (let i = 0; i < 1000; i++) {
+    applyAngle(sens1)
+  }
+  let now = new Date;
+  console.log('new', (now - then) / 1000, now - then)
+
+  then = new Date;
+  for (let i = 0; i < 1000; i++) {
+    sens_1(sens1)
+  }
+  now = new Date;
+  console.log('old',(now - then) / 1000, now - then)
 
   const sens_2 = applyAngle(sens1)
   console.log('sense_2:', sens_2)
 
+  
 
+
+    // draw()
 }
 
-const gpu = new GPU()
 
-const applyAngle = gpu.createKernel(function(a) {
-    const magnitude = a[this.thread.x][0]
-    const angle = a[this.thread.x][1]
-  
-    let x = magnitude * Math.cos(angle)
-    let y = magnitude * Math.sin(angle)
-  
-    return [x, y]
-  }).setOutput([96])
-
-
-
-const generateSensors = () => {
-  const vectors = []
-  for (let v = 1; v < 7; v += 1) {
-    vectors.push(v)
-  }
-
-  const angles = []
-  for (let a = -Math.PI / 4; a < Math.PI / 4; a += 0.1) {
-    angles.push(a)
-  }
-
-  return [vectors, angles]
-}
 
 function draw() {
   for(const ant of ants) {

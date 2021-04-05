@@ -1,5 +1,20 @@
 import { Vector } from './lib/lib.js'
-import { WIDTH, HEIGHT, FOODF, HOMEF, GROUND, ANT_SPEED, ANT_FERMONE_STRENGTH_DECAY, ANT_BONUS_STRENGTH_FERMONE, ANT_FERMONE_STRENGTH } from './Consts.js'
+import { _GPU, WIDTH, HEIGHT, FOODF, HOMEF, GROUND, ANT_SPEED, ANT_FERMONE_STRENGTH_DECAY, ANT_BONUS_STRENGTH_FERMONE, ANT_FERMONE_STRENGTH } from './Consts.js'
+
+const applyAngle = _GPU.createKernel(function(a) {
+  const magnitude = a[this.thread.x][0]
+  const angle = a[this.thread.x][1]
+
+  return [getX(magnitude, angle)[0], getY(magnitude, angle), angle]
+}).setOutput([96])
+
+const getX = _GPU.createKernel(function(m, a) {
+  return m * Math.cos(a)
+}).setOutput([1])
+
+const getY = _GPU.createKernel(function(m, a) {
+  return m * Math.sin(a)
+}).setOutput([1])
 
 export default class Ant {
   constructor(x, y) {
@@ -15,7 +30,6 @@ export default class Ant {
     this.find = 'food'
     this.fermoneD = HOMEF
     this.fermoneF = FOODF
-
     this.fermoneIntensity = ANT_FERMONE_STRENGTH * Math.random()
   }
 
@@ -87,16 +101,26 @@ export default class Ant {
     const x = this.pos.x - 1
     const y = this.pos.y - 1
 
-    const vel = new Vector(1, 0)
     const sensors = []
 
+    const heading = this.angle
+    const sens1 = []
     for (let v = 1; v < 7; v += 1) {
       for (let a = -Math.PI / 4; a < Math.PI / 4; a += 0.1) {
-        vel.setMagnitude(v)
-        vel.setAngle(this.angle + a)
+        sens1.push([v, a + heading])
+      }
+    }
 
-        const fx = Math.trunc(x + vel.x)
-        const fy = Math.trunc(y + vel.y)
+    
+    const sens_2 = applyAngle(sens1)
+
+    for (let i = 0; i < sens_2.length; i++) {
+        const vx = sens_2[i][0]
+        const vy = sens_2[i][1]
+        const a = sens_2[i][2]
+
+        const fx = Math.trunc(x + vx)
+        const fy = Math.trunc(y + vy)
 
         if (fy >= HEIGHT || fy < 0) {
           sensors.push({angle: -a, intensity: null})
@@ -132,7 +156,6 @@ export default class Ant {
         // }
 
         sensors.push({angle: a, intensity: fermone})
-      }
     }
     const sensorLength = sensors.length
     const randomAngle = (Math.random() * (Math.PI / 6) - Math.PI / 12) //0
