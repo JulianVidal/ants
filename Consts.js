@@ -1,8 +1,8 @@
 import { Canvas } from './lib/lib.js'
 
-export const SCALE = 3
-export const WIDTH = (Math.floor(900 / SCALE))
-export const HEIGHT = (Math.floor(500 / SCALE))
+export const SCALE = 1
+export const WIDTH = (Math.floor(300 / SCALE))
+export const HEIGHT = (Math.floor(300 / SCALE))
 // export const CANVAS = new Canvas(WIDTH, HEIGHT)
 
 export const POPULATION = 1000
