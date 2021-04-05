@@ -61,7 +61,8 @@ function setUp() {
       renderPaths = !renderPaths
     }
   }
-  draw()
+  // draw()
+  app.ticker.add(draw)
 }
 
 function draw() {
@@ -73,7 +74,7 @@ function draw() {
   updateFermones()
   
   drawGround()
-  requestAnimationFrame(draw)
+  // requestAnimationFrame(draw)
 }
 
 function drawGround() {

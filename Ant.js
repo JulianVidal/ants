@@ -10,7 +10,7 @@ export default class Ant {
     this.height = 0
 
     this.velocity = new Vector(ANT_SPEED, 0)
-    this.velocity.setAngle(this.angle)
+    this.velocity.setAngleMagnitude(this.angle, ANT_SPEED)
 
     this.find = 'food'
     this.fermoneD = HOMEF
@@ -33,7 +33,7 @@ export default class Ant {
 
   move() {
     this.findAngle()
-    this.velocity.setAngle(this.angle)
+    this.velocity.setAngleMagnitude(this.angle, ANT_SPEED)
     this.pos.add(this.velocity)
     this.checkCollision()
 
@@ -48,14 +48,16 @@ export default class Ant {
       this.fermoneD = FOODF
       this.fermoneF = HOMEF
       this.fermoneIntensity += ANT_BONUS_STRENGTH_FERMONE
-      this.angle += Math.PI
+      // this.angle += Math.PI
+      this.angle += Math.PI + ((Math.random() * 2) - 1) * Math.PI / 3
     }
     if (ground === 1 && this.find === 'home') {
       this.find = 'food'
       this.fermoneD = HOMEF
       this.fermoneF = FOODF
       this.fermoneIntensity += ANT_BONUS_STRENGTH_FERMONE
-      this.angle += Math.PI
+      // this.angle += Math.PI
+      this.angle += Math.PI + ((Math.random() * 2) - 1) * Math.PI / 3
     }
 
     this.fermoneIntensity -= ANT_FERMONE_STRENGTH_DECAY
@@ -69,7 +71,7 @@ export default class Ant {
       || this.pos.y + this.height >= HEIGHT
       || this.pos.y - this.height <= 0) {
         this.angle += Math.PI //{this.pos.x = 250; this.pos.y = 250} 
-        this.velocity.setAngle(this.angle)
+        this.velocity.setAngleMagnitude(this.angle, ANT_SPEED)
         this.pos.add(this.velocity)
         this.checkCollision()
       }
@@ -91,19 +93,18 @@ export default class Ant {
     const sensors = []
 
     for (let v = 1; v < 7; v += 1) {
-      for (let a = -Math.PI / 4; a < Math.PI / 4; a += 0.1) {
-        vel.setMagnitude(v)
-        vel.setAngle(this.angle + a)
+      for (let a = -Math.PI / 4; a < Math.PI / 4; a += Math.PI / 4 / 7) {
+        vel.setAngleMagnitude(this.angle + a, v)
 
         const fx = Math.trunc(x + vel.x)
         const fy = Math.trunc(y + vel.y)
 
         if (fy >= HEIGHT || fy < 0) {
-          sensors.push({angle: -a, intensity: null})
+          sensors.push({angle: -(Math.random() + 0.5) * a, intensity: null})
           break
         }
         if (fx >= WIDTH || fx < 0) {
-          sensors.push({angle: -a, intensity: null})
+          sensors.push({angle: -(Math.random() + 0.5) * a, intensity: null})
           break
         }
 
@@ -121,7 +122,7 @@ export default class Ant {
 
         }
 
-        if (this.find === 'food' && ground === 2) {
+        if (this.find === 'food' && ground === 2 && a === 0) {
           sensors.push({angle: a, intensity: null})
           break
         }
