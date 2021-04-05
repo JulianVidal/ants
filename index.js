@@ -61,7 +61,65 @@ function setUp() {
       renderPaths = !renderPaths
     }
   }
-  draw()
+  // draw()
+
+  const sens1 = []
+  for (let v = 1; v < 7; v += 1) {
+    for (let a = -Math.PI / 4; a < Math.PI / 4; a += 0.1) {
+      sens1.push([v, a])
+    }
+  }
+  console.log('sense1:', sens1)
+
+  const sens2 = generateSensors()
+  console.log('sense2:', sens2)
+
+  const sens_1 = () => {
+    const vectors = []
+    for (let v = 0; v < sens1.length; v += 1) {
+      const magnitude = sens1[v][0]
+      const angle = sens1[v][1]
+      const x = magnitude * Math.cos(angle)
+      const y = magnitude * Math.sin(angle)
+      vectors.push([x, y])
+    }
+    return vectors
+  }
+
+  console.log('sense_1:', sens_1())
+
+  const sens_2 = applyAngle(sens1)
+  console.log('sense_2:', sens_2)
+
+
+}
+
+const gpu = new GPU()
+
+const applyAngle = gpu.createKernel(function(a) {
+    const magnitude = a[this.thread.x][0]
+    const angle = a[this.thread.x][1]
+  
+    let x = magnitude * Math.cos(angle)
+    let y = magnitude * Math.sin(angle)
+  
+    return [x, y]
+  }).setOutput([96])
+
+
+
+const generateSensors = () => {
+  const vectors = []
+  for (let v = 1; v < 7; v += 1) {
+    vectors.push(v)
+  }
+
+  const angles = []
+  for (let a = -Math.PI / 4; a < Math.PI / 4; a += 0.1) {
+    angles.push(a)
+  }
+
+  return [vectors, angles]
 }
 
 function draw() {
