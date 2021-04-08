@@ -10,7 +10,7 @@ export default class Ant {
     this.height = 0
 
     this.velocity = new Vector(ANT_SPEED, 0)
-    this.velocity.setAngle(this.angle)
+    this.velocity.setAngleMagnitude(this.angle, ANT_SPEED)
 
     this.find = 'food'
     this.fermoneD = HOMEF
@@ -33,7 +33,7 @@ export default class Ant {
 
   move() {
     this.findAngle()
-    this.velocity.setAngle(this.angle)
+    this.velocity.setAngleMagnitude(this.angle, ANT_SPEED)
     this.pos.add(this.velocity)
     this.checkCollision()
 
@@ -69,7 +69,7 @@ export default class Ant {
       || this.pos.y + this.height >= HEIGHT
       || this.pos.y - this.height <= 0) {
         this.angle += Math.PI //{this.pos.x = 250; this.pos.y = 250} 
-        this.velocity.setAngle(this.angle)
+        this.velocity.setAngleMagnitude(this.angle, ANT_SPEED)
         this.pos.add(this.velocity)
         this.checkCollision()
       }
@@ -92,8 +92,7 @@ export default class Ant {
 
     for (let v = 1; v < 7; v += 1) {
       for (let a = -Math.PI / 4; a < Math.PI / 4; a += 0.1) {
-        vel.setMagnitude(v)
-        vel.setAngle(this.angle + a)
+        this.velocity.setAngleMagnitude(this.angle + a, v)
 
         const fx = Math.trunc(x + vel.x)
         const fy = Math.trunc(y + vel.y)
