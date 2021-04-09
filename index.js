@@ -250,36 +250,17 @@ const updateAnts = gpu.createKernel(function (ants, FOODF, HOMEF, GROUND) {
     let dAngle = 0.0
     let sensors = 0
     for (let v = 1; v < distance + 1; v += 1) {
-      for (let a = pov / 2; a > -pov / 2; a -= detail) {
+      for (let a = -pov / 2; a <= pov / 2; a += detail) {
         const fx = Math.trunc(x + (v * Math.cos(angle + a)))
         const fy = Math.trunc(y + (v * Math.sin(angle + a)))
-        // if (a > -pov / 2) {
-        //   const fx2 = Math.trunc(x + (v * Math.cos(angle + a - detail)))
-        //   const fy2 = Math.trunc(y + (v * Math.sin(angle + a - detail)))
-        //   if (fx === fx2 && fy === fy2) {
-        //     sensors++
-        //     continue
-        //   }
-        // }
-
-        // if ((fy >= HEIGHT || fy < 0) && v < 4) {
-        //   dAngle += -Math.PI * Math.random() * 0.5
-        //   sensors++
-        //   continue
-        // }
-        // if ((fx >= WIDTH || fx < 0) && v < 4) {
-        //   dAngle += -Math.PI * Math.random() * 0.5
-        //   sensors++
-        //   continue
-        // }
 
         const ground = GROUND[fy][fx]
 
         let fermone = find === 1 ? FOODF[fy][fx] : HOMEF[fy][fx]
-        if (fermone < 0.7 && find === 1 && ground === 2) fermone = 1
-        if (fermone < 0.7 && find === 0 && ground === 1 ) fermone = 1
+        if (find === 1 && ground === 2) fermone = 1.25
+        if (find === 0 && ground === 1 ) fermone = 1.25
 
-        dAngle += a * fermone
+        dAngle += a * fermone * 0.8
         sensors++
       }
     }
