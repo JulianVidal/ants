@@ -66,7 +66,6 @@ function draw() {
   requestAnimationFrame(draw)
 }
 
-
 function initEventListeners() {
   const canvas = document.getElementsByTagName("canvas")[0]
 
@@ -76,7 +75,7 @@ function initEventListeners() {
     if (!mouseIsDown) return
     const mx = Math.ceil(e.offsetX / SCALE)
     const my = Math.ceil(e.offsetY / SCALE)
-    const r = 5
+    const r = 10
 
     for(let y = my - r; y < my + r; y++) {
       for(let x = mx - r; x < mx + r; x++) {
@@ -113,41 +112,44 @@ function createTextureArray() {
 
     for(var j = 0; j < WIDTH; j++){
       let r = 0, g = 0, b = 0, a = 0
+      const ground = GROUND[i][j]
 
-      if (GROUND[i][j] === 1) {
+      if (ground === 1) {
         r = 231
         g = 227
         b = 224
         a = 255
       }
 
-      if (GROUND[i][j] === 2) {
+      if (ground === 2) {
         r = 78
         g = 131
         b = 151
         a = 255
       }
       
-      if (GROUND[i][j] === 3) {
+      if (ground === 3) {
         r = 0
         g = 194
         b = 168
         a = 255
       }
 
-      if (GROUND[i][j] === 0) {
-        if (FOODF[i][j] > 0 && renderPaths) {
+      if (ground === 0) {
+        const food = FOODF[i][j]
+        if (food > 0 && renderPaths) {
           r = 132
           g = 94
           b = 194
-          a = FOODF[i][j] * 255
+          a = food * 255
         }
   
-        if (HOMEF[i][j] > 0 && renderPaths && (HOMEF[i][j] / ANT_FERMONE_STRENGTH) * 255 > a) {
+        const home = HOMEF[i][j] 
+        if (home > 0 && renderPaths && home * 255 > a) {
           r = 195
           g = 74
           b = 54
-          a = HOMEF[i][j] * 255
+          a = home * 255
         }
       }
 
