@@ -1,41 +1,81 @@
-import { SCALE, WIDTH, HEIGHT, POPULATION, FOODF, HOMEF, GROUND, GROUND_FERMONE_DECAY, ANT_FERMONE_STRENGTH } from './Consts.js'
-import Ant from './Ant.js'
+import { 
+  SCALE, 
+  WIDTH, 
+  HEIGHT, 
+  POPULATION, 
+  FOODF, 
+  HOMEF, 
+  GROUND, 
+  GROUND_FERMONE_DECAY, 
+  ANT_FERMONE_STRENGTH, 
+  ANT_FERMONE_STRENGTH_DECAY} from './Consts.js'
+
+let background
+let renderPaths = true
+let mouseIsDown = false
 
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
 const app = new PIXI.Application({width: WIDTH * SCALE, height: HEIGHT * SCALE, antialias: false});
 document.body.appendChild(app.view);
 
-let background
+const gpu = new GPU()
 
-PIXI.Loader.shared.add([
-  'fragShader.glsl',
-  '500x300.png'
-]).load(setUp)
-
-
-const ants = []
-let renderPaths = true
-let mouseIsDown = false
+let ants = []
 
 for(let i = 0; i < POPULATION; i++) {
-  ants.push(new Ant(WIDTH / 2, HEIGHT / 2) )
+  ants.push({
+      x: WIDTH / 2,
+      y: HEIGHT / 2,
+      angle: Math.random() * 2 * Math.PI,
+      find : 'food',
+      fermoneD : HOMEF,
+      fermoneF : FOODF,
+      fermoneIntensity : 1//ANT_FERMONE_STRENGTH * Math.random(),
+  })
 }
 
 function setUp() {
+  initEventListeners()
+  initPixiTexture()    
 
-  var canvas = document.getElementsByTagName("canvas")[0]
-  canvas.addEventListener("webglcontextlost", function(event) {
-      event.preventDefault();
-  }, false);
+
+  draw()
+}
+
+function draw() {
+  clearAnts()
+  const a = updateAnts(
+    ants.map( ({x, y, angle, find}) => {
+      const f = find === 'food' ? 1 : 0
+      return [x, y, angle, f]
+    }), FOODF, HOMEF, GROUND)
+  // console.log(ants, a)
+  for (let i = 0; i < ants.length; i++) {
+    const ant = ants[i];
+    const [dx, dy, na] = a[i]
+    ant.x += dx
+    ant.y += dy
+    ant.angle = na
+  }
+
+  drawAnts()
+  updateFermones()
+  drawGround(GROUND)
+
+  requestAnimationFrame(draw)
+}
+
+
+function initEventListeners() {
+  const canvas = document.getElementsByTagName("canvas")[0]
 
   canvas.onmousedown = () => mouseIsDown = true
   canvas.onmouseup = () => mouseIsDown = false
-
   canvas.onmousemove  = e => {
     if (!mouseIsDown) return
     const mx = Math.ceil(e.offsetX / SCALE)
     const my = Math.ceil(e.offsetY / SCALE)
-    const r = 8
+    const r = 5
 
     for(let y = my - r; y < my + r; y++) {
       for(let x = mx - r; x < mx + r; x++) {
@@ -45,10 +85,16 @@ function setUp() {
       }
     }
   }
-    
-  const textureArr = createTextureArray()
-  console.log(textureArr)
 
+  document.body.onkeyup = e => {
+    if(e.key == ' '){
+      renderPaths = !renderPaths
+    }
+  }
+}
+
+function initPixiTexture() {
+  const textureArr = createTextureArray()
   const baseTexture = new PIXI.BaseTexture(new PIXI.resources.BufferResource(textureArr, {width: WIDTH, height:HEIGHT}));
   const texture = new PIXI.Texture(baseTexture);
   background = new PIXI.Sprite(texture)
@@ -56,41 +102,6 @@ function setUp() {
   background.height = HEIGHT * SCALE
   app.stage.addChild(background)
 
-  document.body.onkeyup = e => {
-    if(e.key == ' '){
-      renderPaths = !renderPaths
-    }
-  }
-  draw()
-}
-
-function draw() {
-  for(const ant of ants) {
-    ant.do()
-    ant.draw()
-  }
-
-  updateFermones()
-  
-  drawGround()
-  requestAnimationFrame(draw)
-}
-
-function drawGround() {
-  const textureArr = createTextureArray(GROUND)
-  const baseTexture = new PIXI.BaseTexture(new PIXI.resources.BufferResource(textureArr, {width: WIDTH, height:HEIGHT}));
-  const texture = new PIXI.Texture(baseTexture);
-
-  background.texture = texture
-}
-
-function updateFermones() {
-  for(let y = 0; y < HEIGHT; y++) {
-    for(let x = 0; x < WIDTH; x++) {
-      FOODF[y][x] = FOODF[y][x] > 0 ? FOODF[y][x] - GROUND_FERMONE_DECAY : 0
-      HOMEF[y][x] = HOMEF[y][x] > 0 ? HOMEF[y][x] - GROUND_FERMONE_DECAY : 0
-    }
-  }
 }
 
 function createTextureArray() {
@@ -142,3 +153,152 @@ function createTextureArray() {
 
   return textureArr
 }
+
+function drawGround() {
+  const textureArr = createTextureArray(GROUND)
+  const baseTexture = new PIXI.BaseTexture(new PIXI.resources.BufferResource(textureArr, {width: WIDTH, height:HEIGHT}));
+  const texture = new PIXI.Texture(baseTexture);
+
+  background.texture = texture
+}
+
+function updateFermones() {
+  for(let y = 0; y < HEIGHT; y++) {
+    for(let x = 0; x < WIDTH; x++) {
+      FOODF[y][x] = FOODF[y][x] > 0 ? FOODF[y][x] - GROUND_FERMONE_DECAY : 0
+      HOMEF[y][x] = HOMEF[y][x] > 0 ? HOMEF[y][x] - GROUND_FERMONE_DECAY : 0
+    }
+  }
+}
+
+function drawAnts() {
+  for (const ant of ants) {
+
+    // const [x, y] = ant
+    const x = Math.trunc(ant.x)
+    const y = Math.trunc(ant.y)
+    if (GROUND[y] === undefined) continue
+    if (GROUND[y][x] === undefined) continue
+    const ground = GROUND[y][x]
+
+    if (ground === 0) {
+      GROUND[y][x] = 3
+    }
+  }
+}
+
+function clearAnts() {
+  for (const ant of ants) {
+    const {fermoneD, fermoneIntensity} = ant
+    const x = Math.trunc(ant.x)
+    const y = Math.trunc(ant.y)
+
+    if (GROUND[y] === undefined) continue
+    if (GROUND[y][x] === undefined) continue
+    const ground = GROUND[y][x]
+
+    if (ground === 3) {
+      GROUND[y][x] = 0
+      fermoneD[y][x] = fermoneD[y][x] > fermoneIntensity ? fermoneD[y][x] : fermoneIntensity
+    }
+
+    if (ground === 2 && ant.find === 'food') {
+      ant.find = 'home'
+      GROUND[y][x] = 0
+      ant.fermoneD = FOODF
+      ant.fermoneF = HOMEF
+      ant.fermoneIntensity += ANT_FERMONE_STRENGTH
+      ant.angle += Math.PI
+    }
+    if (ground === 1 && ant.find === 'home') {
+      ant.find = 'food'
+      ant.fermoneD = HOMEF
+      ant.fermoneF = FOODF
+      ant.fermoneIntensity += ANT_FERMONE_STRENGTH
+      ant.angle += Math.PI
+    }
+
+    ant.fermoneIntensity -= ANT_FERMONE_STRENGTH_DECAY
+    if (ant.fermoneIntensity < 0) ant.fermoneIntensity = 0
+  }
+}
+
+const updateAnts = gpu.createKernel(function (ants, FOODF, HOMEF, GROUND) {
+  const {WIDTH, HEIGHT} = this.constants
+  let [x, y, angle, find] = ants[this.thread.x]
+
+  if (x + 1 >= WIDTH
+    || x - 1 <= 0
+    || y + 1 >= HEIGHT
+    || y - 1 <= 0) {
+      angle += Math.PI
+      return [Math.cos(angle), Math.sin(angle), angle]
+    }
+
+    const pov = Math.PI / 1.5
+    const distance = 8
+    const detail = (pov / 20)
+    let sensorLength = Math.trunc(distance * (pov / detail))
+
+    let dAngle = 0.0
+    let sensors = 0
+    for (let v = 1; v < distance + 1; v += 1) {
+      let broken = false
+      for (let a = -pov / 2; a < pov / 2; a += detail) {
+        const fx = Math.trunc(x + (v * Math.cos(angle + a)))
+        const fy = Math.trunc(y + (v * Math.sin(angle + a)))
+        if (a > -pov / 2) {
+          const fx2 = Math.trunc(x + ((v - 1) * Math.cos(angle + a - detail)))
+          const fy2 = Math.trunc(y + ((v - 1) * Math.sin(angle + a - detail)))
+          if (fx === fx2 && fy === fy2) {
+            continue
+          }
+        }
+
+        if (fy >= HEIGHT || fy < 0) {
+          dAngle += -a
+          continue
+        }
+        if (fx >= WIDTH || fx < 0) {
+          dAngle += -a
+          continue
+        }
+
+        const ground = GROUND[fy][fx]
+
+        if (find === 0 ) {
+          if (ground === 1 && a === 0){ 
+            dAngle = 0
+            sensors -= sensors
+            broken = true
+            break
+          } 
+        }
+
+        if (find === 1 && ground === 2 && a === 0) {
+          dAngle = 0
+          sensors -= sensors
+          broken = true
+          break
+        }
+
+        let fermone = find === 1 ? FOODF[fy][fx] : HOMEF[fy][fx]
+        if (fermone === 0 && ground === 2 && find === 1) fermone = 1 
+        if (fermone === 0 && ground === 1 && find === 0) fermone = 1 
+
+        dAngle += a * fermone
+        sensors++
+      }
+      if (broken) break
+    }
+    const randomAngle = (Math.random() * (Math.PI / 6) - Math.PI / 12)
+
+    angle += (dAngle / ((sensors | 1))) + randomAngle
+
+  return [Math.cos(angle), Math.sin(angle), angle]
+},{ 
+constants: {WIDTH, HEIGHT},
+output: [POPULATION],
+})
+
+setUp()
