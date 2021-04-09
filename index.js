@@ -16,6 +16,7 @@ let mouseIsDown = false
 
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
 const app = new PIXI.Application({width: WIDTH * SCALE, height: HEIGHT * SCALE, antialias: false});
+app.renderer.backgroundColor = 0x353A4A
 document.body.appendChild(app.view);
 
 const gpu = new GPU()
@@ -112,33 +113,41 @@ function createTextureArray() {
 
     for(var j = 0; j < WIDTH; j++){
       let r = 0, g = 0, b = 0, a = 0
-      if (GROUND[i][j] === 2) {
-        r = 0
-        g = 255
-        b = 0
+
+      if (GROUND[i][j] === 1) {
+        r = 231
+        g = 227
+        b = 224
         a = 255
       }
-      if (GROUND[i][j] === 1 || GROUND[i][j] === 3) {
-        r = 255
-        g = 255
-        b = 255
+
+      if (GROUND[i][j] === 2) {
+        r = 78
+        g = 131
+        b = 151
         a = 255
       }
       
+      if (GROUND[i][j] === 3) {
+        r = 0
+        g = 194
+        b = 168
+        a = 255
+      }
 
-      if (GROUND[i][j] !== 3) {
+      if (GROUND[i][j] === 0) {
         if (FOODF[i][j] > 0 && renderPaths) {
-          r = 255
-          g = 0
-          b = 255
-          a = (FOODF[i][j] / ANT_FERMONE_STRENGTH) * 255
+          r = 132
+          g = 94
+          b = 194
+          a = FOODF[i][j] * 255
         }
   
         if (HOMEF[i][j] > 0 && renderPaths && (HOMEF[i][j] / ANT_FERMONE_STRENGTH) * 255 > a) {
-          r = 255
-          g = 255
-          b = 0
-          a = (HOMEF[i][j] / ANT_FERMONE_STRENGTH) * 255
+          r = 195
+          g = 74
+          b = 54
+          a = HOMEF[i][j] * 255
         }
       }
 
@@ -173,12 +182,10 @@ function updateFermones() {
 
 function drawAnts() {
   for (const ant of ants) {
-
-    // const [x, y] = ant
     const x = Math.trunc(ant.x)
     const y = Math.trunc(ant.y)
     if (GROUND[y] === undefined) continue
-    if (GROUND[y][x] === undefined) continue
+    if (GROUND[y][x] === undefined || y === 0 || x === 0) continue
     const ground = GROUND[y][x]
 
     if (ground === 0) {
@@ -235,7 +242,7 @@ const updateAnts = gpu.createKernel(function (ants, FOODF, HOMEF, GROUND) {
       return [Math.cos(angle), Math.sin(angle), angle]
     }
 
-    const pov = Math.PI / 1.5
+    const pov = Math.PI / 2
     const distance = 8
     const detail = (pov / 20)
     let sensorLength = Math.trunc(distance * (pov / detail))
@@ -243,53 +250,38 @@ const updateAnts = gpu.createKernel(function (ants, FOODF, HOMEF, GROUND) {
     let dAngle = 0.0
     let sensors = 0
     for (let v = 1; v < distance + 1; v += 1) {
-      let broken = false
-      for (let a = -pov / 2; a < pov / 2; a += detail) {
+      for (let a = pov / 2; a > -pov / 2; a -= detail) {
         const fx = Math.trunc(x + (v * Math.cos(angle + a)))
         const fy = Math.trunc(y + (v * Math.sin(angle + a)))
-        if (a > -pov / 2) {
-          const fx2 = Math.trunc(x + ((v - 1) * Math.cos(angle + a - detail)))
-          const fy2 = Math.trunc(y + ((v - 1) * Math.sin(angle + a - detail)))
-          if (fx === fx2 && fy === fy2) {
-            continue
-          }
-        }
+        // if (a > -pov / 2) {
+        //   const fx2 = Math.trunc(x + (v * Math.cos(angle + a - detail)))
+        //   const fy2 = Math.trunc(y + (v * Math.sin(angle + a - detail)))
+        //   if (fx === fx2 && fy === fy2) {
+        //     sensors++
+        //     continue
+        //   }
+        // }
 
-        if (fy >= HEIGHT || fy < 0) {
-          dAngle += -a
-          continue
-        }
-        if (fx >= WIDTH || fx < 0) {
-          dAngle += -a
-          continue
-        }
+        // if ((fy >= HEIGHT || fy < 0) && v < 4) {
+        //   dAngle += -Math.PI * Math.random() * 0.5
+        //   sensors++
+        //   continue
+        // }
+        // if ((fx >= WIDTH || fx < 0) && v < 4) {
+        //   dAngle += -Math.PI * Math.random() * 0.5
+        //   sensors++
+        //   continue
+        // }
 
         const ground = GROUND[fy][fx]
 
-        if (find === 0 ) {
-          if (ground === 1 && a === 0){ 
-            dAngle = 0
-            sensors -= sensors
-            broken = true
-            break
-          } 
-        }
-
-        if (find === 1 && ground === 2 && a === 0) {
-          dAngle = 0
-          sensors -= sensors
-          broken = true
-          break
-        }
-
         let fermone = find === 1 ? FOODF[fy][fx] : HOMEF[fy][fx]
-        if (fermone === 0 && ground === 2 && find === 1) fermone = 1 
-        if (fermone === 0 && ground === 1 && find === 0) fermone = 1 
+        if (fermone < 0.7 && find === 1 && ground === 2) fermone = 1
+        if (fermone < 0.7 && find === 0 && ground === 1 ) fermone = 1
 
         dAngle += a * fermone
         sensors++
       }
-      if (broken) break
     }
     const randomAngle = (Math.random() * (Math.PI / 6) - Math.PI / 12)
 
