@@ -14,6 +14,7 @@ let background
 let renderPaths = true
 let mouseIsDown = false
 
+// Initializes Canvas
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
 const app = new PIXI.Application({width: WIDTH * SCALE, height: HEIGHT * SCALE, antialias: false});
 app.renderer.backgroundColor = 0x353A4A
@@ -21,8 +22,8 @@ document.body.appendChild(app.view);
 
 const gpu = new GPU()
 
+// Initializes ants
 let ants = []
-
 for(let i = 0; i < POPULATION; i++) {
   ants.push({
       x: WIDTH / 2,
@@ -31,7 +32,7 @@ for(let i = 0; i < POPULATION; i++) {
       find : 'food',
       fermoneD : HOMEF,
       fermoneF : FOODF,
-      fermoneIntensity : 1//ANT_FERMONE_STRENGTH * Math.random(),
+      fermoneIntensity : 1
   })
 }
 
@@ -44,13 +45,17 @@ function setUp() {
 }
 
 function draw() {
+  // Clears ants from GROUND array and drops fermones
   clearAnts()
+
+  // Gets the velocity of each ant
   const a = updateAnts(
     ants.map( ({x, y, angle, find}) => {
       const f = find === 'food' ? 1 : 0
       return [x, y, angle, f]
     }), FOODF, HOMEF, GROUND)
-  // console.log(ants, a)
+  
+  // Adds velocity to the position
   for (let i = 0; i < ants.length; i++) {
     const ant = ants[i];
     const [dx, dy, na] = a[i]
@@ -59,26 +64,60 @@ function draw() {
     ant.angle = na
   }
 
+  // Adds ants to Ground Array
   drawAnts()
-  updateFermones()
+
+// Reduces all fermones on the GROUND array
+updateFermones()
+
+  // Draws the Map
   drawGround(GROUND)
 
   requestAnimationFrame(draw)
 }
 
+// Adding food on click and space bar clear
 function initEventListeners() {
   const canvas = document.getElementsByTagName("canvas")[0]
+  const radius = 20
 
-  canvas.onmousedown = () => mouseIsDown = true
+  canvas.onmousedown = e => {
+    mouseIsDown = true
+    const mx = Math.ceil(e.offsetX / SCALE)
+    const my = Math.ceil(e.offsetY / SCALE)
+    for(let r = 0; r < radius; r++) {
+      for(let a = 0; a < Math.PI * 2; a += 0.01) {
+        const x = Math.trunc(r * Math.cos(a) + mx)
+        const y = Math.trunc(r * Math.sin(a) + my)
+
+        if (GROUND[y] === undefined) continue
+        if (GROUND[y][x] === undefined || GROUND[y][x] === 1 || GROUND[y][x] === 2) continue
+        GROUND[y][x] = 2
+      }
+    }
+  }
   canvas.onmouseup = () => mouseIsDown = false
   canvas.onmousemove  = e => {
     if (!mouseIsDown) return
     const mx = Math.ceil(e.offsetX / SCALE)
     const my = Math.ceil(e.offsetY / SCALE)
-    const r = 10
 
-    for(let y = my - r; y < my + r; y++) {
-      for(let x = mx - r; x < mx + r; x++) {
+  // SQUARE
+  //   for(let y = my - radius; y < my + radius; y++) {
+  //     for(let x = mx - radius; x < mx + radius; x++) {
+  //       if (GROUND[y] === undefined) continue
+  //       if (GROUND[y][x] === undefined || GROUND[y][x] === 1) continue
+  //       GROUND[y][x] = 2
+  //     }
+  //   }
+  // }
+
+  // CIRCLE
+    for(let r = 0; r < radius; r++) {
+      for(let a = 0; a < Math.PI * 2; a += 0.1) {
+        const x = Math.trunc(r * Math.cos(a) + mx)
+        const y = Math.trunc(r * Math.sin(a) + my)
+
         if (GROUND[y] === undefined) continue
         if (GROUND[y][x] === undefined || GROUND[y][x] === 1) continue
         GROUND[y][x] = 2
@@ -93,6 +132,7 @@ function initEventListeners() {
   }
 }
 
+// Creates texture for the canvas
 function initPixiTexture() {
   const textureArr = createTextureArray()
   const baseTexture = new PIXI.BaseTexture(new PIXI.resources.BufferResource(textureArr, {width: WIDTH, height:HEIGHT}));
@@ -104,6 +144,7 @@ function initPixiTexture() {
 
 }
 
+// Creates the array that is turned to texture
 function createTextureArray() {
   const textureArr = new Uint8ClampedArray(HEIGHT * WIDTH * 4);
 
@@ -165,6 +206,7 @@ function createTextureArray() {
   return textureArr
 }
 
+// Sends texture to canvas and draws it
 function drawGround() {
   const textureArr = createTextureArray(GROUND)
   const baseTexture = new PIXI.BaseTexture(new PIXI.resources.BufferResource(textureArr, {width: WIDTH, height:HEIGHT}));
@@ -173,6 +215,7 @@ function drawGround() {
   background.texture = texture
 }
 
+// Reduces all fermone strength
 function updateFermones() {
   for(let y = 0; y < HEIGHT; y++) {
     for(let x = 0; x < WIDTH; x++) {
@@ -182,6 +225,7 @@ function updateFermones() {
   }
 }
 
+// Draw the ants on the texture by setting to 3 in the array
 function drawAnts() {
   for (const ant of ants) {
     const x = Math.trunc(ant.x)
@@ -196,6 +240,7 @@ function drawAnts() {
   }
 }
 
+// Clears ants, drops fermones, picks/drops food
 function clearAnts() {
   for (const ant of ants) {
     const {fermoneD, fermoneIntensity} = ant
@@ -206,11 +251,13 @@ function clearAnts() {
     if (GROUND[y][x] === undefined) continue
     const ground = GROUND[y][x]
 
+    //  Clears the ants before moving them, drops fermone
     if (ground === 3) {
       GROUND[y][x] = 0
       fermoneD[y][x] = fermoneD[y][x] > fermoneIntensity ? fermoneD[y][x] : fermoneIntensity
     }
 
+    // Picking up and dropping food, changing fermone it followd
     if (ground === 2 && ant.find === 'food') {
       ant.find = 'home'
       GROUND[y][x] = 0
@@ -227,15 +274,19 @@ function clearAnts() {
       ant.angle += Math.PI
     }
 
+    // Reduces the strength of the fermone of the ant
     ant.fermoneIntensity -= ANT_FERMONE_STRENGTH_DECAY
     if (ant.fermoneIntensity < 0) ant.fermoneIntensity = 0
   }
 }
 
+// Detects fermones in front of ants, chooses direction
+// based on the strength of the fermones
 const updateAnts = gpu.createKernel(function (ants, FOODF, HOMEF, GROUND) {
   const {WIDTH, HEIGHT} = this.constants
   let [x, y, angle, find] = ants[this.thread.x]
 
+  // Checks for collisions
   if (x + 1 >= WIDTH
     || x - 1 <= 0
     || y + 1 >= HEIGHT
@@ -244,10 +295,10 @@ const updateAnts = gpu.createKernel(function (ants, FOODF, HOMEF, GROUND) {
       return [Math.cos(angle), Math.sin(angle), angle]
     }
 
+    // Creates Sensors, how many, pov
     const pov = Math.PI / 2
     const distance = 8
     const detail = (pov / 20)
-    let sensorLength = Math.trunc(distance * (pov / detail))
 
     let dAngle = 0.0
     let sensors = 0
@@ -258,16 +309,20 @@ const updateAnts = gpu.createKernel(function (ants, FOODF, HOMEF, GROUND) {
 
         const ground = GROUND[fy][fx]
 
+        // If there is food or home, it acts as a fermone
+        // of higher strength that the actual fermones
         let fermone = find === 1 ? FOODF[fy][fx] : HOMEF[fy][fx]
-        if (find === 1 && ground === 2) fermone = 1.25
-        if (find === 0 && ground === 1 ) fermone = 1.25
+        if (find === 1 && ground === 2) fermone = 10 / 8
+        if (find === 0 && ground === 1 ) fermone = 10 / 8
 
         dAngle += a * fermone * 0.8
         sensors++
       }
     }
+    // Random angle added to the ant
     const randomAngle = (Math.random() * (Math.PI / 6) - Math.PI / 12)
 
+    // Addes the average of the sensors and the random angle
     angle += (dAngle / ((sensors | 1))) + randomAngle
 
   return [Math.cos(angle), Math.sin(angle), angle]

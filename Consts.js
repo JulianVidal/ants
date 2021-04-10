@@ -1,5 +1,5 @@
 // CANVAS
-export const SCALE = 2
+export const SCALE = 3
 export const WIDTH = (Math.floor(window.innerWidth / SCALE)) + 1
 export const HEIGHT = (Math.floor(window.innerHeight / SCALE)) + 1
 
@@ -8,7 +8,7 @@ export const GROUND_FERMONE_DECAY = 2 / (WIDTH * 2)
 
 
 // ANTS
-export const POPULATION = 10000
+export const POPULATION = 2000
 export const ANT_FERMONE_STRENGTH_DECAY = 1.5 / (WIDTH * 2)
 export const ANT_FERMONE_STRENGTH = 1
 
