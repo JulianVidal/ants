@@ -179,9 +179,9 @@ function createTextureArray() {
       if (ground === 0) {
         const food = FOODF[i][j]
         if (food > 0 && renderPaths) {
-          r = 132
-          g = 94
-          b = 194
+          r = 59
+          g = 101
+          b = 206
           a = food * 255
         }
   
@@ -312,10 +312,10 @@ const updateAnts = gpu.createKernel(function (ants, FOODF, HOMEF, GROUND) {
         // If there is food or home, it acts as a fermone
         // of higher strength that the actual fermones
         let fermone = find === 1 ? FOODF[fy][fx] : HOMEF[fy][fx]
-        if (find === 1 && ground === 2) fermone = 10 / 8
-        if (find === 0 && ground === 1 ) fermone = 10 / 8
+        if (find === 1 && ground === 2) fermone  =  fermone > 3 ? fermone : 3
+        if (find === 0 && ground === 1 ) fermone = fermone > 3 ? fermone : 3
 
-        dAngle += a * fermone * 0.8
+        dAngle += a * fermone
         sensors++
       }
     }

@@ -9,7 +9,7 @@ export const GROUND_FERMONE_DECAY = 2 / (WIDTH * 2)
 
 // ANTS
 export const POPULATION = 2000
-export const ANT_FERMONE_STRENGTH_DECAY = 1.5 / (WIDTH * 2)
+export const ANT_FERMONE_STRENGTH_DECAY = 0.5 / (WIDTH * 2)
 export const ANT_FERMONE_STRENGTH = 1
 
 // Initializing Arrays
