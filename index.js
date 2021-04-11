@@ -114,7 +114,7 @@ function initEventListeners() {
 
   // CIRCLE
     for(let r = 0; r < radius; r++) {
-      for(let a = 0; a < Math.PI * 2; a += 0.1) {
+      for(let a = 0; a < Math.PI * 2; a += Math.PI * 2 / 360) {
         const x = Math.trunc(r * Math.cos(a) + mx)
         const y = Math.trunc(r * Math.sin(a) + my)
 
@@ -196,10 +196,10 @@ function createTextureArray() {
 
       let constant2 = 4 * (constant1 + j)
 
-      for (var k = 0; k < 4; k++) {
-        const c = k === 0 ? r : (k === 1 ? g : (k === 2 ? b : a))
-        textureArr[constant2 + k] = c
-      }
+      textureArr[constant2] = r
+      textureArr[constant2 + 1] = g
+      textureArr[constant2 + 2] = b
+      textureArr[constant2 + 3] = a
     }
   }
 
@@ -263,14 +263,14 @@ function clearAnts() {
       GROUND[y][x] = 0
       ant.fermoneD = FOODF
       ant.fermoneF = HOMEF
-      ant.fermoneIntensity += ANT_FERMONE_STRENGTH
+      ant.fermoneIntensity += ant.fermoneIntensity <= 3 ? ANT_FERMONE_STRENGTH : 0
       ant.angle += Math.PI
     }
     if (ground === 1 && ant.find === 'home') {
       ant.find = 'food'
       ant.fermoneD = HOMEF
       ant.fermoneF = FOODF
-      ant.fermoneIntensity += ANT_FERMONE_STRENGTH
+      ant.fermoneIntensity += ant.fermoneIntensity <= 3 ? ANT_FERMONE_STRENGTH : 0
       ant.angle += Math.PI
     }
 
@@ -291,7 +291,7 @@ const updateAnts = gpu.createKernel(function (ants, FOODF, HOMEF, GROUND) {
     || x - 1 <= 0
     || y + 1 >= HEIGHT
     || y - 1 <= 0) {
-      angle += Math.PI
+      angle += Math.PI / 2
       return [Math.cos(angle), Math.sin(angle), angle]
     }
 
@@ -312,8 +312,8 @@ const updateAnts = gpu.createKernel(function (ants, FOODF, HOMEF, GROUND) {
         // If there is food or home, it acts as a fermone
         // of higher strength that the actual fermones
         let fermone = find === 1 ? FOODF[fy][fx] : HOMEF[fy][fx]
-        if (find === 1 && ground === 2) fermone  =  fermone > 3 ? fermone : 3
-        if (find === 0 && ground === 1 ) fermone = fermone > 3 ? fermone : 3
+        if (find === 1 && ground === 2) fermone  =  fermone > 3 ? fermone : 5
+        if (find === 0 && ground === 1 ) fermone = fermone > 3 ? fermone : 5
 
         dAngle += a * fermone
         sensors++
